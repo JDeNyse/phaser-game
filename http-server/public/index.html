@@ -22,6 +22,7 @@
 		var score = 0;
 		var scoreText;
 		var walkCount = 1;
+		var spaceKey;
 		
 		function update() {
 
@@ -30,8 +31,12 @@
 			game.physics.arcade.collide(stars, platforms);
 			game.physics.arcade.overlap(player, stars, collectStar, null, this);
 			//  Reset the players velocity (movement)
+			updateCheck();
 			if (player.body.velocity.x > 0){
-				player.body.velocity.x = player.body.velocity.x - 1
+				player.body.velocity.x = player.body.velocity.x - 5
+			}
+			else if(player.body.velocity.x < 0){
+				player.body.velocity.x = player.body.velocity.x + 5
 			}
 
 			if (cursors.left.isDown)
@@ -79,6 +84,7 @@
 			game.load.image('sky', 'assets/sky.png');
 			game.load.image('ground', 'assets/platform.png');
 			game.load.image('star', 'assets/star.png');
+			game.load.image('fireball', 'assets/fireball.png');
 			game.load.spritesheet('dude', 'assets/dude.png', 32, 48);
 			game.load.audio('coinsound', 'assets/coinsound.wav')
 			game.load.audio('jumpsound', 'assets/jumpsound.wav')
@@ -102,7 +108,7 @@
 			game.physics.arcade.enable(ledge, Phaser.Physics.ARCADE);
 			ledge.body.immovable = true;
 
-			player = game.add.sprite(32, game.world.height - 350, 'dude');
+			player = game.add.sprite(32, game.world.height - 450, 'dude');
 			game.physics.arcade.enable(player);
 			player.enableBody = true;
 			player.body.velocity.x = 0;
@@ -115,14 +121,17 @@
 			player.animations.add('left', [0, 1, 2, 3], 10, true);
 			player.animations.add('right', [5, 6, 7, 8], 10, true);
 
-            //game.add.sprite(0, 0, 'star');
 			console.log("test");
 			
 			cursors = game.input.keyboard.createCursorKeys();
+			spaceKey = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
+			spaceKey.onDown.add(fireballAttack, this);
 			
 			coinsound = game.add.audio('coinsound');
-			walksound = game.add.audio('walksound');
+			walksound = game.add.audio('walksound', .5);
 			jumpsound = game.add.audio('jumpsound');
+			
+			fireballs = game.add.group();
 			
 			
 			stars = game.add.group();
@@ -158,6 +167,31 @@
 				return null;
 			}
 		
+		}
+		function updateCheck(){
+			 if (game.input.activePointer.withinGame)
+				{
+					game.input.enabled = true;
+				}
+				else
+				{
+					game.input.enabled = false;
+				}
+		}
+		function fireballAttack(){
+			console.log('pew');
+			fireball = game.add.sprite(player.body.x, player.body.y, 'fireball');
+			fireball.enableBody = true;
+			game.physics.arcade.enable(fireball);
+			if (player.body.velocity.x > 0){
+				fireball.body.velocity.x = player.body.velocity.x + 150;
+			}
+			else if (player.body.velocity.x < 0){
+				fireball.body.velocity.x = player.body.velocity.x - 150;
+			}
+			else if (player.body.velocity.x == 0){
+				fireball.body.velocity.y = -150;
+			}
 		}
     //};
 
