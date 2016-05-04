@@ -13,9 +13,6 @@
 
     <script type="text/javascript">
 	
-
-    //window.onload = function() {
-
         var game = new Phaser.Game(800, 600, Phaser.AUTO, '', { preload: preload, create: create, update: update });
 		var platforms;
 		var player;
@@ -23,6 +20,9 @@
 		var scoreText;
 		var walkCount = 1;
 		var spaceKey;
+		var fireball;
+		var fireballTime = 0;
+		var fireballs;
 		
 		function update() {
 
@@ -30,6 +30,8 @@
 			game.physics.arcade.collide(player, platforms);
 			game.physics.arcade.collide(stars, platforms);
 			game.physics.arcade.overlap(player, stars, collectStar, null, this);
+			game.physics.arcade.overlap(fireballs, platforms, explodeFireball, null, this);
+
 			//  Reset the players velocity (movement)
 			updateCheck();
 			if (player.body.velocity.x > 0){
@@ -100,7 +102,6 @@
 			platforms.enableBody = true;
 			var ground = platforms.create(0, game.world.height - 64, 'ground');
 			ground.scale.setTo(2, 2);
-			//game.physics.arcade.enable(ground, Phaser.Physics.ARCADE);
 			ground.body.immovable = true;
 			var ledge = platforms.create(400, 400, 'ground');
 			ledge.body.immovable = true;
@@ -115,8 +116,7 @@
 			player.body.bounce.y = .09;
 			player.body.gravity.y = 300;
 			player.body.collideWorldBounds = true;
-			//player.body.checkCollision.up = true;
-			//player.body.checkCollision.down = true;
+
 
 			player.animations.add('left', [0, 1, 2, 3], 10, true);
 			player.animations.add('right', [5, 6, 7, 8], 10, true);
@@ -132,7 +132,16 @@
 			jumpsound = game.add.audio('jumpsound');
 			
 			fireballs = game.add.group();
-			
+			fireballs.enableBody = true;
+			fireballs.physicsBodyType = Phaser.Physics.ARCADE;
+			for (var i = 0; i < 20; i++){
+				var f = fireballs.create(0, 0, 'fireball');
+				f.name = 'fireball' + i;
+				f.exists = false;
+				f.visible = false;
+				f.checkWorldBounds = true;
+				f.events.onOutOfBounds.add(resetFireball, this);
+			}
 			
 			stars = game.add.group();
 			stars.enableBody = true;
@@ -178,22 +187,38 @@
 					game.input.enabled = false;
 				}
 		}
-		function fireballAttack(){
-			console.log('pew');
-			fireball = game.add.sprite(player.body.x, player.body.y, 'fireball');
-			fireball.enableBody = true;
-			game.physics.arcade.enable(fireball);
-			if (player.body.velocity.x > 0){
-				fireball.body.velocity.x = player.body.velocity.x + 150;
-			}
-			else if (player.body.velocity.x < 0){
-				fireball.body.velocity.x = player.body.velocity.x - 150;
-			}
-			else if (player.body.velocity.x == 0){
-				fireball.body.velocity.y = -150;
+		
+		function explodeFireball(fireball){
+			fireball.kill();
+			console.log('yo');
+		}
+		
+		function fireballAttack() {
+
+		if (game.time.now > fireballTime){
+			fireball = fireballs.getFirstExists(false);
+
+			if (fireball)
+				{
+				fireball.reset(player.x + 6, player.y - 8);
+				if (player.body.velocity.x > 0 && !cursors.up.isDown){
+						fireball.body.velocity.x = player.body.velocity.x + 150;
+					}
+					else if (player.body.velocity.x < 0 && !cursors.up.isDown){
+						fireball.body.velocity.x = player.body.velocity.x - 150;
+					}
+					else {
+						fireball.body.velocity.y = -150;
+					}
+				fireballTime = game.time.now + 150;
+				}
 			}
 		}
-    //};
+		
+		function resetFireball(fireball){
+			fireball.kill();
+		}
+
 
     </script>
 
