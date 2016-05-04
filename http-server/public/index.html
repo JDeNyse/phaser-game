@@ -16,6 +16,8 @@
         var game = new Phaser.Game(800, 600, Phaser.AUTO, '', { preload: preload, create: create, update: update });
 		var platforms;
 		var player;
+		var baddies;
+		var baddie;
 		var score = 0;
 		var scoreText;
 		var walkCount = 1;
@@ -28,12 +30,16 @@
 
 			//  Collide the player and the stars with the platforms
 			game.physics.arcade.collide(player, platforms);
+			game.physics.arcade.collide(baddies, platforms);
 			game.physics.arcade.collide(stars, platforms);
 			game.physics.arcade.overlap(player, stars, collectStar, null, this);
+			//game.physics.arcade.overlap(player, baddies, playerDeath, null, this);
 			game.physics.arcade.overlap(fireballs, platforms, explodeFireball, null, this);
+			game.physics.arcade.overlap(fireballs, baddies, killBaddie, null, this);
 
 			//  Reset the players velocity (movement)
 			updateCheck();
+			enemyUpdate();
 			if (player.body.velocity.x > 0){
 				player.body.velocity.x = player.body.velocity.x - 5
 			}
@@ -77,7 +83,6 @@
 			}
 			if (walkCount != 0){
 				walkCount = walkCount - 1;
-				console.log('decrement')
 			}
 
 		}
@@ -88,9 +93,11 @@
 			game.load.image('star', 'assets/star.png');
 			game.load.image('fireball', 'assets/fireball.png');
 			game.load.spritesheet('dude', 'assets/dude.png', 32, 48);
-			game.load.audio('coinsound', 'assets/coinsound.wav')
-			game.load.audio('jumpsound', 'assets/jumpsound.wav')
-			game.load.audio('walksound', 'assets/walksound.wav')
+			game.load.spritesheet('baddie','assets/baddie.png', 32, 32);
+			game.load.audio('coinsound', 'assets/coinsound.wav');
+			game.load.audio('jumpsound', 'assets/jumpsound.wav');
+			game.load.audio('walksound', 'assets/walksound.wav');
+			game.load.audio('fireballsound', 'assets/fireballsound.wav');
 
 		}
         
@@ -116,12 +123,23 @@
 			player.body.bounce.y = .09;
 			player.body.gravity.y = 300;
 			player.body.collideWorldBounds = true;
+			
+			baddies = game.add.group();
+			baddies.enableBody = true;
+			baddies.physicsBodyType = Phaser.Physics.ARCADE;
+			baddies.enableGravity = true;
+			for (var i = 0; i < 3; i++){
+				var baddie = baddies.create(300+i*4, 300+i*4, 'baddie' );
+				baddie.body.gravity.y = 6;
 
-
+			
+			}
+			
+			baddie.animations.add('bleft', [0 , 1], 10, 'baddie', true);
+			baddie.animations.add('bright', [2 , 3], 10, 'baddie', true);
+			
 			player.animations.add('left', [0, 1, 2, 3], 10, true);
 			player.animations.add('right', [5, 6, 7, 8], 10, true);
-
-			console.log("test");
 			
 			cursors = game.input.keyboard.createCursorKeys();
 			spaceKey = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
@@ -130,6 +148,7 @@
 			coinsound = game.add.audio('coinsound');
 			walksound = game.add.audio('walksound', .5);
 			jumpsound = game.add.audio('jumpsound');
+			fireballsound = game.add.audio('fireballsound');
 			
 			fireballs = game.add.group();
 			fireballs.enableBody = true;
@@ -190,7 +209,12 @@
 		
 		function explodeFireball(fireball){
 			fireball.kill();
-			console.log('yo');
+		}
+		
+		function killBaddie(fireball, baddie){
+			fireball.kill()
+			baddie.kill()
+			score += 20;
 		}
 		
 		function fireballAttack() {
@@ -200,15 +224,16 @@
 
 			if (fireball)
 				{
-				fireball.reset(player.x + 6, player.y - 8);
+				fireball.reset(player.x + 6, player.y + 15)
+				fireballsound.play();
 				if (player.body.velocity.x > 0 && !cursors.up.isDown){
-						fireball.body.velocity.x = player.body.velocity.x + 150;
+						fireball.body.velocity.x = player.body.velocity.x + 250;
 					}
 					else if (player.body.velocity.x < 0 && !cursors.up.isDown){
-						fireball.body.velocity.x = player.body.velocity.x - 150;
+						fireball.body.velocity.x = player.body.velocity.x - 250;
 					}
 					else {
-						fireball.body.velocity.y = -150;
+						fireball.body.velocity.y = -250;
 					}
 				fireballTime = game.time.now + 150;
 				}
@@ -218,7 +243,21 @@
 		function resetFireball(fireball){
 			fireball.kill();
 		}
+		function enemyUpdate(){
+			baddieUpdate();
+		
+		}
+		
+		function baddieUpdate(){ /*
+			for (var i = 0; i < baddies.length; i++){
+				var currentBaddie = this.baddies.childern;
+					console.log(currentBaddie);
+				
+			}*/
+		
+		}
 
+		
 
     </script>
 
